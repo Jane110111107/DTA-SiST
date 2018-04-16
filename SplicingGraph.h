@@ -252,8 +252,10 @@ public:
 	void set_parents();
 	int add_node(Node& node);
 	bool build(ReadHash& read_hash, SuffixTree& left_tree, SuffixTree& right_tree, int seed, vector<pair<string,float> >& transcripts);
-	string forward_extend(SuffixTree& right_tree, const string& seed_contig);
-	string reverse_extend(SuffixTree& left_tree, const string& seed_contig);
+	//string forward_extend(SuffixTree& right_tree, const string& seed_contig);
+	//string reverse_extend(SuffixTree& left_tree, const string& seed_contig);
+	string forward_extend(SuffixTree& right_tree, int seed);
+	string reverse_extend(SuffixTree& left_tree, int seed);
 	void set_reads_tag(ReadHash& read_hash, const string& sequence, int tag);
 	void set_reads_tag(ReadHash& read_hash, const string& sequence, vector<int>& map_reads, int tag);
 	bool is_trunk(ReadHash& read_hash, const string& trunk);
@@ -262,8 +264,10 @@ public:
 	void set_reads_pos_in_node(ReadHash& read_hash, int p);
 	bool refine_reverse_by_pair(ReadHash& read_hash, SuffixTree& left_tree, SuffixTree& right_tree, int p);
 	bool refine_forward_by_pair(ReadHash& read_hash, SuffixTree& left_tree, SuffixTree& right_tree, int p);
-	bool forward_extend(SuffixTree& right_tree, string& contig, const string& stop_seq);
-	bool reverse_extend(SuffixTree& left_tree, string& contig, const string& stop_seq);
+	//bool forward_extend(SuffixTree& right_tree, string& contig, const string& stop_seq);
+	//bool reverse_extend(SuffixTree& left_tree, string& contig, const string& stop_seq);
+	bool forward_extend(SuffixTree& right_tree, string& contig, const string& stop_seq,int seed);
+	bool reverse_extend(SuffixTree& left_tree, string& contig, const string& stop_seq, int seed);
 	void branch_extend_by_coverage(ReadHash& read_hash, SuffixTree& left_tree, SuffixTree& right_tree);
 	void forward_extend_by_coverage(ReadHash& read_hash, SuffixTree& right_tree, int p);
 	void reverse_extend_by_coverage(ReadHash& read_hash, SuffixTree& left_tree, int p);

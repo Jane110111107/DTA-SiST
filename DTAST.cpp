@@ -197,7 +197,7 @@ void assemble(){
 
 	for (unsigned int i = 0; i < data_size; ++i) {
 
-		if (data_tag[i] != -5) 
+		if (data_tag[i] != -5 || data_cov[i] < 2) 
 			continue;
 
 		SplicingGraph splicing_graph;			

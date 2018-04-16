@@ -156,10 +156,9 @@ int SplicingGraph::add_node(Node& node) {
 bool SplicingGraph::build(ReadHash& read_hash, SuffixTree& left_tree, SuffixTree& right_tree, int seed, vector<pair<string,float> >& transcripts) {
 
 	data_tag[seed] = -1;
-	const string& seed_str = data[seed];
 	//cout << " Get trunk..." << endl;
-	const string& left = reverse_extend(left_tree, seed_str);
-	const string& right = forward_extend(right_tree, seed_str);
+	const string& left = reverse_extend(left_tree, seed);
+	const string& right = forward_extend(right_tree, seed);
 	string trunk = left;
 	if (right.length() > g_read_length)
 		trunk = left + right.substr(g_read_length);
@@ -169,12 +168,12 @@ bool SplicingGraph::build(ReadHash& read_hash, SuffixTree& left_tree, SuffixTree
 		set_reads_tag(read_hash, trunk, -4);		
 		return false;
 	}
-/*
+//*
 	if (!is_trunk(read_hash, trunk)) {
-		set_reads_tag(read_hash, trunk, -4);		
+		set_reads_tag(read_hash, trunk, -3);		
 		return false;
 	}
-*/
+//*/
 
 
 	Node node(trunk);
@@ -213,21 +212,21 @@ bool SplicingGraph::build(ReadHash& read_hash, SuffixTree& left_tree, SuffixTree
 
 
 
-string SplicingGraph::forward_extend(SuffixTree& right_tree, const string& seed_contig) {
+string SplicingGraph::forward_extend(SuffixTree& right_tree, int seed) {
 
 //cout << "forward extend..." << endl;
-	if (seed_contig.length() < g_read_length)
-		return seed_contig;
 
-	string contig = seed_contig;
+	string contig = data[seed];
 	kmer_int_type kmer_int;
 	trie_node* index;
 	vector<vector<int> > candi_set;
 	vector<int> candi_len;
 	int overlap_len, pos;
 	vector<int> read_vec;
-	int read_id, mate_id;
+	int read_id, mate_id, candi_id;
 	bool is_extend = true;
+	int contig_cov = data_cov[seed];
+	int candi_cov = contig_cov*10000;
 
 	while (is_extend) {
 
@@ -239,6 +238,7 @@ string SplicingGraph::forward_extend(SuffixTree& right_tree, const string& seed_
 		candi_set.clear();
 		candi_len.clear();
 		overlap_len = g_min_same_len;
+		//while ((index != NULL)&&overlap_len < g_read_length) {
 		while (index != NULL) {
 			if ( (index->read_set).size() > 0){
 				read_vec = index -> read_set;
@@ -267,6 +267,7 @@ string SplicingGraph::forward_extend(SuffixTree& right_tree, const string& seed_
 						if (data_tag[mate_id] > -2) {
 							contig = contig + data[read_id].substr(candi_len[i]);
 							data_tag[read_id] = -1;
+							contig_cov = data_cov[read_id];
 							is_extend = true;
 							break;
 						}
@@ -282,21 +283,26 @@ string SplicingGraph::forward_extend(SuffixTree& right_tree, const string& seed_
 		
 		if (!is_extend) {
 			for (int i = candi_set.size()-1; i >= 0; --i) {
-				read_vec = candi_set[i];			
+				read_vec = candi_set[i];
+				candi_id = -1;
 				for (int j = 0; j < read_vec.size(); ++j) {
 					read_id = read_vec[j];
-					if (data_tag[read_id] < -2) {
-
-						contig = contig + data[read_id].substr(candi_len[i]);
-
-						data_tag[read_id] = -1;
-						is_extend = true;
-						break;
+					if (data_tag[read_id] > -2)
+						continue;
+					if (j == 0 || candi_cov < abs(data_cov[read_id] - contig_cov) ) {
+						candi_id = read_id;
+						candi_cov = abs(data_cov[read_id] - contig_cov);
 					}
 				}
-				if(is_extend)
-					break;				
+				if (candi_id >= 0){
+					contig = contig + data[candi_id].substr(candi_len[i]);
+					data_tag[candi_id] = -1;
+					contig_cov = data_cov[candi_id];
+					is_extend = true;
+					break;
+				}				
 			}
+			
 		} //if (!is_extend)		
 	}
 
@@ -306,21 +312,21 @@ string SplicingGraph::forward_extend(SuffixTree& right_tree, const string& seed_
 
 
 
-string SplicingGraph::reverse_extend(SuffixTree& left_tree, const string& seed_contig) {
+string SplicingGraph::reverse_extend(SuffixTree& left_tree, int seed) {
 
 //cout << "reverse extend..." << endl;
-	if (seed_contig.length() < g_read_length)
-		return seed_contig;
-
-	string contig = seed_contig;
+	
+	string contig = data[seed];
 	kmer_int_type kmer_int;
 	vector<vector<int> > candi_set;
 	vector<int> candi_len;
 	int overlap_len, pos;
 	vector<int> read_vec;
-	int read_id, mate_id;
+	int read_id, mate_id, candi_id;
 	bool is_extend = true;
 	trie_node* index = NULL;
+	int contig_cov = data_cov[seed];
+	int candi_cov = contig_cov*10000;
 
 	while (is_extend) {
 
@@ -334,7 +340,7 @@ string SplicingGraph::reverse_extend(SuffixTree& left_tree, const string& seed_c
 		candi_set.clear();
 		candi_len.clear();
 		overlap_len = g_min_same_len;
-
+		//while ((index != NULL)&&overlap_len<g_read_length) {
 		while (index != NULL) {
 
 			if ( (index->read_set).size() > 0){
@@ -364,6 +370,7 @@ string SplicingGraph::reverse_extend(SuffixTree& left_tree, const string& seed_c
 						if (data_tag[mate_id] > -2) {
 							contig = data[read_id].substr(0, g_read_length-candi_len[i]) + contig;
 							data_tag[read_id] = -1;
+							contig_cov = data_cov[read_id];
 							is_extend = true;
 							break;
 						}
@@ -380,18 +387,23 @@ string SplicingGraph::reverse_extend(SuffixTree& left_tree, const string& seed_c
 		if (!is_extend) {
 			for (int i = candi_set.size()-1; i >= 0; --i) {
 				read_vec = candi_set[i];
-//hou mian kao lv cov 				
+				candi_id = -1;
 				for (int j = 0; j < read_vec.size(); ++j) {
 					read_id = read_vec[j];
-					if (data_tag[read_id] < -2) {
-						contig = data[read_id].substr(0, g_read_length-candi_len[i]) + contig;
-						data_tag[read_id] = -1;
-						is_extend = true;
-						break;
+					if (data_tag[read_id] > -2)
+						continue;
+					if (j == 0 || candi_cov < abs(data_cov[read_id] - contig_cov) ) {
+						candi_id = read_id;
+						candi_cov = abs(data_cov[read_id] - contig_cov);
 					}
 				}
-				if(is_extend)
-					break;				
+				if (candi_id >= 0){
+					contig = data[candi_id].substr(0, g_read_length-candi_len[i]) + contig;
+					is_extend = true;
+					data_tag[candi_id] = -1;
+					contig_cov = data_cov[candi_id];
+					break;
+				}				
 			}
 		} //if (!is_extend)		
 	}
@@ -440,6 +452,9 @@ void SplicingGraph::set_reads_tag(ReadHash& read_hash, const string& sequence, v
 
 bool SplicingGraph::is_trunk(ReadHash& read_hash, const string& trunk) {
 
+	if (trunk.length() < g_read_length)
+		return true;
+
 	int read_id;
 	int used_sum = 0;
 	int total_sum = 0;
@@ -470,15 +485,18 @@ void SplicingGraph::refine_forward_trunk(ReadHash& read_hash, SuffixTree& right_
 	const string& trunk = node_set[0].sequence;
 	int trunk_len = trunk.length();
 	int check_len = g_min_same_len*2;
+	int read_id = -1;
+
 	if (check_len + g_read_length > trunk_len)
 		check_len = trunk_len - g_read_length;
 
 	for (int i = 1; i <= check_len; ++i) {
 		const string& read = trunk.substr(trunk_len-i-g_read_length, g_read_length);
 		read_int_type read_int = get_read_int_type(read);
-		if (read_hash.find_read(read_int)  < 0)
+		read_id = read_hash.find_read(read_int);
+		if (read_id  < 0)
 			continue;
-		const string& forward_trunk = forward_extend(right_tree, read);
+		const string& forward_trunk = forward_extend(right_tree, read_id);
 		if (forward_trunk.length() >= g_read_length + g_min_exon_length) {
 			node_set[0].sequence = trunk.substr(0, trunk_len-i-g_read_length) + forward_trunk;
 			if (trunk_len-i-2*g_read_length+1 <= 0)
@@ -510,9 +528,10 @@ void SplicingGraph::refine_reverse_trunk(ReadHash& read_hash, SuffixTree& left_t
 
 		const string& read = trunk.substr(i, g_read_length);
 		read_int_type read_int = get_read_int_type(read);
-		if (read_hash.find_read(read_int) < 0)
+		read_id = read_hash.find_read(read_int);
+		if (read_id < 0)
 			continue;
-		const string& reverse_trunk = reverse_extend(left_tree, read);
+		const string& reverse_trunk = reverse_extend(left_tree, read_id);
 		if (reverse_trunk.length() >= g_read_length + g_min_exon_length) {
 			node_set[0].sequence = reverse_trunk + trunk.substr(i+g_read_length);
 			if (i + 2*g_read_length-1 > trunk_len)
@@ -602,11 +621,13 @@ bool SplicingGraph::refine_reverse_by_pair(ReadHash& read_hash, SuffixTree& left
 					string extend_seq = data[mate_id];
 					data_tag[mate_id] = -1;
 					const string& stop_seq = node_set[p].sequence.substr(0, g_min_same_len-1);
-					is_add = forward_extend(right_tree, extend_seq, stop_seq);
+					is_add = forward_extend(right_tree, extend_seq, stop_seq, mate_id);
 					if (is_add) {
 						return_tag = true;
-						const string& seq = reverse_extend(left_tree, extend_seq);
-						node_set[p].sequence = seq + node_set[p].sequence;
+						const string& seq = reverse_extend(left_tree, mate_id);
+						if (seq.length() > g_read_length)
+							extend_seq = seq.substr(0,seq.length()-g_read_length) + extend_seq;
+						node_set[p].sequence = extend_seq + node_set[p].sequence;
 						break;
 					} else {
 						if (extend_seq.length() > 1000) {
@@ -671,11 +692,13 @@ bool SplicingGraph::refine_forward_by_pair(ReadHash& read_hash, SuffixTree& left
 					string extend_seq = data[mate_id];
 					data_tag[mate_id] = -1;
 					const string& stop_seq = node_set[p].sequence.substr(node_set[p].sequence.length()-g_min_same_len+1);
-					is_add = reverse_extend(left_tree, extend_seq, stop_seq);
+					is_add = reverse_extend(left_tree, extend_seq, stop_seq, mate_id);
 					if (is_add) {
 						return_tag = true;
-						const string& seq = forward_extend(right_tree, extend_seq);
-						node_set[p].sequence = node_set[p].sequence + seq;
+						const string& seq = forward_extend(right_tree, mate_id);
+						if (seq.length() > g_read_length)
+							extend_seq = extend_seq + seq.substr(g_read_length);
+						node_set[p].sequence = node_set[p].sequence + extend_seq;
 						break;
 					} else {
 						if (extend_seq.length() > 1000) {
@@ -701,7 +724,7 @@ bool SplicingGraph::refine_forward_by_pair(ReadHash& read_hash, SuffixTree& left
 }
 
 
-bool SplicingGraph::forward_extend(SuffixTree& right_tree, string& contig, const string& stop_seq) {
+bool SplicingGraph::forward_extend(SuffixTree& right_tree, string& contig, const string& stop_seq, int seed) {
 
 //cout << "forward extend..." << endl;
 	if (contig.length() < g_read_length)
@@ -713,8 +736,10 @@ bool SplicingGraph::forward_extend(SuffixTree& right_tree, string& contig, const
 	vector<int> candi_len;
 	int overlap_len, pos;
 	vector<int> read_vec;
-	int read_id, mate_id;
+	int read_id, mate_id, candi_id;
 	bool is_extend = true;
+	int contig_cov = data_cov[seed];
+	int candi_cov = contig_cov*10000;
 
 	while (is_extend) {
 
@@ -760,6 +785,7 @@ bool SplicingGraph::forward_extend(SuffixTree& right_tree, string& contig, const
 						if (data_tag[mate_id] > -2) {
 							contig = contig + data[read_id].substr(candi_len[i]);
 							data_tag[read_id] = -1;
+							contig_cov = data_cov[read_id];
 							is_extend = true;
 							break;
 						}
@@ -776,25 +802,25 @@ bool SplicingGraph::forward_extend(SuffixTree& right_tree, string& contig, const
 		if (!is_extend) {
 			for (int i = candi_set.size()-1; i >= 0; --i) {
 				read_vec = candi_set[i];
-//hou mian kao lv cov 				
+				candi_id = -1;
 				for (int j = 0; j < read_vec.size(); ++j) {
 					read_id = read_vec[j];
-					int compatible_len = get_compatible_len(stop_seq, data[read_id].substr(g_read_length-g_min_same_len+1));
-					if (compatible_len != 0){
-						contig = contig.substr(0, contig.length()-candi_len[i]) + data[read_id].substr(0, g_read_length-compatible_len);
-						data_tag[read_id] = -1;
-						return true;
-					}
-					if (data_tag[read_id] < -2) {
-						contig = contig + data[read_id].substr(candi_len[i]);
-						data_tag[read_id] = -1;
-						is_extend = true;
-						break;
+					if (data_tag[read_id] > -2)
+						continue;
+					if (j == 0 || candi_cov < abs(data_cov[read_id] - contig_cov) ) {
+						candi_id = read_id;
+						candi_cov = abs(data_cov[read_id] - contig_cov);
 					}
 				}
-				if(is_extend)
-					break;				
+				if (candi_id >= 0){
+					contig = contig + data[candi_id].substr(candi_len[i]);
+					is_extend = true;
+					data_tag[candi_id] = -1;
+					contig_cov = data_cov[candi_id];
+					break;
+				}				
 			}
+			
 		} //if (!is_extend)		
 	}
 
@@ -805,7 +831,7 @@ bool SplicingGraph::forward_extend(SuffixTree& right_tree, string& contig, const
 
 
 
-bool SplicingGraph::reverse_extend(SuffixTree& left_tree, string& contig, const string& stop_seq) {
+bool SplicingGraph::reverse_extend(SuffixTree& left_tree, string& contig, const string& stop_seq, int seed) {
 
 //cout << "reverse extend..." << endl;
 	if (contig.length() < g_read_length)
@@ -817,8 +843,10 @@ bool SplicingGraph::reverse_extend(SuffixTree& left_tree, string& contig, const 
 	vector<int> candi_len;
 	int overlap_len, pos;
 	vector<int> read_vec;
-	int read_id, mate_id;
+	int read_id, mate_id,candi_id;
 	bool is_extend = true;
+	int contig_cov = data_cov[seed];
+	int candi_cov = contig_cov*10000;
 
 	while (is_extend) {
 
@@ -864,6 +892,7 @@ bool SplicingGraph::reverse_extend(SuffixTree& left_tree, string& contig, const 
 						if (data_tag[mate_id] > -2) {
 							contig = data[read_id].substr(0, g_read_length-candi_len[i]) + contig;
 							data_tag[read_id] = -1;
+							contig_cov = data_cov[read_id];
 							is_extend = true;
 							break;
 						}
@@ -880,24 +909,23 @@ bool SplicingGraph::reverse_extend(SuffixTree& left_tree, string& contig, const 
 		if (!is_extend) {
 			for (int i = candi_set.size()-1; i >= 0; --i) {
 				read_vec = candi_set[i];
-//hou mian kao lv cov 				
+				candi_id = -1;
 				for (int j = 0; j < read_vec.size(); ++j) {
 					read_id = read_vec[j];
-					int compatible_len = get_compatible_len(stop_seq, data[read_id].substr(0,g_min_same_len-1));
-					if (compatible_len != 0){
-						contig = data[read_id].substr(compatible_len) + contig.substr(candi_len[i]);
-						data_tag[read_id] = -1;
-						return true;
-					}
-					if (data_tag[read_id] < -2) {
-						contig = data[read_id].substr(0, g_read_length-candi_len[i]) + contig;
-						data_tag[read_id] = -1;
-						is_extend = true;
-						break;
+					if (data_tag[read_id] > -2)
+						continue;
+					if (j == 0 || candi_cov < abs(data_cov[read_id] - contig_cov) ) {
+						candi_id = read_id;
+						candi_cov = abs(data_cov[read_id] - contig_cov);
 					}
 				}
-				if(is_extend)
-					break;				
+				if (candi_id >= 0){
+					contig = data[candi_id].substr(0, g_read_length-candi_len[i]) + contig;
+					is_extend = true;
+					data_tag[candi_id] = -1;
+					contig_cov = data_tag[candi_id];
+					break;
+				}				
 			}
 		} //if (!is_extend)		
 	}
@@ -929,6 +957,7 @@ void SplicingGraph::forward_extend_by_coverage(ReadHash& read_hash, SuffixTree& 
 
 	pair<int, int> right_id;
 	read_int_type read_int;
+	int read_id;
 
 	while (node_set[p].forward_check_pos.size() > 0) {
 
@@ -942,11 +971,12 @@ void SplicingGraph::forward_extend_by_coverage(ReadHash& read_hash, SuffixTree& 
 		for (int i = check_pos.first; i < check_pos.second; ++i) {
 			const string& seed = node_set[p].sequence.substr(i-g_read_length, g_read_length);
 			read_int = get_read_int_type(seed);
-			if (read_hash.find_read(read_int) < 0)
+			read_id = read_hash.find_read(read_int);
+			if (read_id < 0)
 				continue;
 			right_id.first = -1;
 			right_id.second = -1;
-			const string& forward_seq = forward_extend(right_tree, seed);
+			const string& forward_seq = forward_extend(right_tree, read_id);
 			set_reads_tag(read_hash, forward_seq, -4);
 
 			if (forward_seq.length() <= g_read_length + 10  || (g_is_paired_end &&(!pair_support(read_hash, forward_seq,p)))) 
@@ -1186,7 +1216,8 @@ void SplicingGraph::reverse_extend_by_coverage(ReadHash& read_hash, SuffixTree& 
 
 	pair<int, int> right_id;
 	read_int_type read_int;
-	
+	int read_id;
+
 	while (node_set[p].reverse_check_pos.size() > 0) {
 
 		pair<int, int> check_pos = node_set[p].reverse_check_pos.front();
@@ -1199,11 +1230,12 @@ void SplicingGraph::reverse_extend_by_coverage(ReadHash& read_hash, SuffixTree& 
 		for (int i = check_pos.first; i < check_pos.second; ++i) {
 			const string& seed = node_set[p].sequence.substr(i, g_read_length);
 			read_int = get_read_int_type(seed);
-			if (read_hash.find_read(read_int) < 0)
+			read_id = read_hash.find_read(read_int);
+			if (read_id < 0)
 				continue;
 			right_id.first = -1;
 			right_id.second = -1;
-			const string& reverse_seq = reverse_extend(left_tree, seed);
+			const string& reverse_seq = reverse_extend(left_tree, read_id);
 			set_reads_tag(read_hash, reverse_seq, -4);
 
 			string::size_type start2;
@@ -2134,6 +2166,8 @@ void SplicingGraph::check_transcripts(ReadHash& read_hash, vector<pair<string,fl
 						data_cov[read_id] = data_cov[read_id] -1;
 						if (data_cov[read_id] < 0)
 							data_tag[read_id] = -2;
+						else
+							data_tag[read_id] = -3;
 					}
 				} else {
 					is_add = false;
