@@ -1010,9 +1010,9 @@ void SplicingGraph::forward_extend_by_coverage(ReadHash& read_hash, SuffixTree& 
 				continue;
 
 			if (right_id.second == -1) {//add branch
-				Node node2 = node_set[p].sequence.substr(0, i + g_read_length);
+				Node node2 = node_set[p].sequence.substr(0, i);
 				int n2 = add_node(node2);
-				node_set[p].sequence = node_set[p].sequence.substr(i+g_read_length);
+				node_set[p].sequence = node_set[p].sequence.substr(i);
 				for (int j = 0; j < node_set[p].parents.size(); ++j) {
 					int p_i = node_set[p].parents[j];
 					node_set[p_i].delete_child(p);
@@ -1042,7 +1042,7 @@ void SplicingGraph::forward_extend_by_coverage(ReadHash& read_hash, SuffixTree& 
 			} else { //add bubble
 				bool fail_add = false;
 				int length = forward_seq.length() - g_read_length - right_id.second;
-				int start1 = i;
+				int start1 = i-g_read_length;
 				string bubble_seq;
 				if (length > 0)
 					bubble_seq = forward_seq.substr(g_read_length, length);
@@ -1167,9 +1167,9 @@ void SplicingGraph::forward_extend_by_coverage(ReadHash& read_hash, SuffixTree& 
 
 				if (fail_add && forward_seq.length() > g_min_exon_length + g_read_length){
 						
-					Node node2 = node_set[p].sequence.substr(0, i + g_read_length);
+					Node node2 = node_set[p].sequence.substr(0, i);
 					int n2 = add_node(node2);
-					node_set[p].sequence = node_set[p].sequence.substr(i + g_read_length);
+					node_set[p].sequence = node_set[p].sequence.substr(i);
 					for (int j = 0; j < node_set[p].parents.size(); ++j) {
 						int p_i = node_set[p].parents[j];
 						node_set[p_i].delete_child(p);
