@@ -2,22 +2,19 @@
 DTAST: a novel radical framework for de novo transcriptome assembly based on suffix trees
 
 ** Description **
-The RNA-seq has revolutionized our ability to transcripts
-reconstruction. A growing number of strategies have been developed to
-solve the transcriptome assembly problems, but their performances still
-need to be improved. In this article, we develop a novel radical framework
-for de novo transcriptome assembly based on suffix trees, called
-DTAST. DTAST first extends contigs by reads that keep the longest
-overlaps with the contigs’ terminuses. These reads can be found in the
-linear time of the longest overlaps length through a well-designed suffix
-tree structure. Then, DTAST constructs splicing graphs based on contigs
-for each gene locus. Finally, DTAST proposes two strategies to extract
-transcript-representing paths: depth-first enumeration strategy and
-the hybrid strategy based on length and coverage. We implemented the
-above two strategies and compared them with the state-of-the-art de novo
-assemblers on both simulated and real datasets. Experimental results
-showed that DTAST performs more competitive than the other compared
-de novo assemblers especially when the read sequence is long.
+The RNA-seq has revolutionized our ability to transcripts reconstruction. A growing number of strategies have been developed to
+solve the transcriptome assembly problems, but their performances still need to be improved. In this article, we develop a novel radical framework for de novo transcriptome assembly based on suffix trees, called DTAST. DTAST first extends contigs by reads that keep the longest overlaps with the contigs’ terminuses. These reads can be found in the linear time of the longest overlaps length through a well-designed suffix tree structure. Then, DTAST constructs splicing graphs based on contigs for each gene locus. Finally, DTAST proposes two strategies to extract transcript-representing paths: depth-first enumeration strategy and the hybrid strategy based on length and coverage. We implemented the above two strategies and compared them with the state-of-the-art de novo assemblers on both simulated and real datasets. Experimental results showed that DTAST performs more competitive than the other compared de novo assemblers especially when the read sequence is long.
+
+
+
+** Install ** 
+$export PATH=/path/tp/boost/include:$PATH 
+
+$g++ -o suffixtree GeneralSet.cpp ReadUtility.cpp KmerUtility.cpp SuffixTree.cpp ReadHash.cpp SplicingGraph.cpp DTAST.cpp
+
+$export PATH=/path/to/suffixtree:$PATH
+
+
 
 ** Uasge **
 quik start:
@@ -27,6 +24,26 @@ detail:
 
 ** Output **
 DTAST will output a fasta file named transcriptome.fa that contains all the possible transcripts assembled by DTAST.
+
+
+
+** Simulated data **
+
+We used FluxSimulator to simulate five samples with read lengths of 50bp, 75bp, 100bp, 125bp, and 150bp, respectively. The only difference between these five samples is the length of reads. Each sample contains 0.1 million paired-end reads that are generated from 100 isoform transcripts originated from 41 different genes in chromosome 1 (CRCh38.83, NCBI).
+
+sim50bp_1.fa and sim50bp_2.fa contain total of 0.1 million paired-end reads with length of 50bp. 
+
+sim75bp_1.fa and sim75bp_2.fa contain total of 0.1 million paired-end reads with length of 75bp. 
+
+sim100bp_1.fa and sim100bp_2.fa contain total of 0.1 million paired-end reads with length of 100bp. 
+
+sim125bp_1.fa and sim125bp_2.fa contain total of 0.1 million paired-end reads with length of 125bp. 
+
+sim150bp_1.fa and sim150bp_2.fa contain total of 0.1 million paired-end reads with length of 150bp. 
+
+reference.fa contains total of 100 reference transcripts.
+
+
 
 ** Contact information **
 If you have any questions or concerns, please send email to zhaojin_cc@163.com.
