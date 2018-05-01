@@ -12,7 +12,7 @@ solve the transcriptome assembly problems, but their performances still need to 
 
 ** Install ** 
 
-$export PATH=/path/tp/boost/include:$PATH 
+$export PATH=/path/to/boost/include:$PATH 
 
 $g++ -o suffixtree GeneralSet.cpp ReadUtility.cpp KmerUtility.cpp SuffixTree.cpp ReadHash.cpp SplicingGraph.cpp DTAST.cpp
 
