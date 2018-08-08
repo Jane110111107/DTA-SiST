@@ -1,12 +1,12 @@
 
-# DTAST
+# DTA-SiST
 
-DTAST: a novel radical framework for de novo transcriptome assembly based on suffix trees
+DTA-SiST: a novel radical framework for de novo transcriptome assembly based on suffix trees
 
 ** Description **
 
 The RNA-seq has revolutionized our ability to transcripts reconstruction. A growing number of strategies have been developed to
-solve the transcriptome assembly problems, but their performances still need to be improved. In this article, we develop a novel radical framework for de novo transcriptome assembly based on suffix trees, called DTAST. DTAST first extends contigs by reads that keep the longest overlaps with the contigs’ terminuses. These reads can be found in the linear time of the longest overlaps length through a well-designed suffix tree structure. Then, DTAST constructs splicing graphs based on contigs for each gene locus. Finally, DTAST proposes two strategies to extract transcript-representing paths: depth-first enumeration strategy and the hybrid strategy based on length and coverage. We implemented the above two strategies and compared them with the state-of-the-art de novo assemblers on both simulated and real datasets. Experimental results showed that DTAST performs more competitive than the other compared de novo assemblers especially when the read sequence is long.
+solve the transcriptome assembly problems, but their performances still need to be improved. In this article, we develop a novel radical framework for de novo transcriptome assembly based on suffix trees, called DTAST. DTAST first extends contigs by reads that keep the longest overlaps with the contigs’ terminuses. These reads can be found in the linear time of the longest overlaps length through a well-designed suffix tree structure. Then, DTAST constructs splicing graphs based on contigs for each gene locus. Finally, DTAST proposes two strategies to extract transcript-representing paths: depth-first enumeration strategy and the hybrid strategy based on length and coverage. We implemented the above two strategies and compared them with the state-of-the-art de novo assemblers on both simulated and real datasets. Experimental results showed that DTA-SiST performs more competitive than the other compared de novo assemblers especially when the read sequence is long.
 
 
 
